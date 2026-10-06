@@ -33,6 +33,12 @@ The U.S. Census geocoder turns addresses into coordinates. Sole proprietors, onl
 
 Add a fetch function in `scripts/fetch-data.mjs` that returns records in the same shape as the others, list it in `main()`, and add a row to `PROVIDERS` in `data.js`. The city then appears in search on its own.
 
+## Plans
+
+Every plan can browse any covered city at any distance. Plans differ by how many opportunities can be claimed each month (Solo 20, Growth 50, Pro 100) and by features such as filters and CSV export.
+
+When `styles.css`, `config.js`, `data.js` or `app.js` change, bump the `?v=` number in `index.html` so returning visitors load the new files together.
+
 ## Run it
 
 ```bash

@@ -90,23 +90,27 @@ const SIGNAL_TYPES = {
     phrase: () => 'has been adding to its team' }
 };
 
+/* Every plan can browse any city. Plans differ by how many opportunities can be claimed each
+   month and by features. MAX_CITIES only keeps one feed a manageable size. */
+const MAX_CITIES = 10;
+
 const PLANS = {
   solo: {
-    id: 'solo', name: 'Solo', price: 19, limit: 20, maxCities: 1, maxMiles: 25,
+    id: 'solo', name: 'Solo', price: 19, limit: 20,
     tagline: 'For owner-operators getting started',
-    bullets: ['20 opportunities per month', 'One service area', 'Basic business information', 'Contact information when available', 'Opportunity reason', 'Weekly new opportunities'],
+    bullets: ['Claim 20 opportunities per month', 'Browse every covered city', 'Basic business information', 'Contact information when available', 'Opportunity reason', 'Weekly new opportunities'],
     features: { scoreNumber: false, industryFilter: false, sizeFilter: false, typeFilter: false, advancedFilter: false, csv: false }
   },
   growth: {
-    id: 'growth', name: 'Growth', price: 39, limit: 50, maxCities: 3, maxMiles: 40, popular: true,
+    id: 'growth', name: 'Growth', price: 39, limit: 50, popular: true,
     tagline: 'For crews that want a steady pipeline',
-    bullets: ['50 opportunities per month', 'Larger service area', 'Decision-maker information when available', 'Opportunity score', 'Buying signal and reason', 'Industry filters', 'Office size filters', 'CSV export'],
+    bullets: ['Claim 50 opportunities per month', 'Browse every covered city', 'Decision-maker information when available', 'Opportunity score', 'Buying signal and reason', 'Industry filters', 'Office size filters', 'CSV export'],
     features: { scoreNumber: true, industryFilter: true, sizeFilter: true, typeFilter: true, advancedFilter: false, csv: true }
   },
   pro: {
-    id: 'pro', name: 'Pro', price: 79, limit: 100, maxCities: 5, maxMiles: 60,
+    id: 'pro', name: 'Pro', price: 79, limit: 100,
     tagline: 'For teams working several markets',
-    bullets: ['100 opportunities per month', 'Multiple cities and service areas', 'Highest-value opportunities prioritized', 'Detailed buying signals', 'Decision-maker research', 'Lead history', 'Pipeline tracking', 'CSV export', 'Advanced filtering'],
+    bullets: ['Claim 100 opportunities per month', 'Browse every covered city', 'Highest-value opportunities prioritized', 'Detailed buying signals', 'Decision-maker research', 'Lead history', 'Pipeline tracking', 'CSV export', 'Advanced filtering'],
     features: { scoreNumber: true, industryFilter: true, sizeFilter: true, typeFilter: true, advancedFilter: true, csv: true }
   }
 };

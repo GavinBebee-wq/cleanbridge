@@ -387,7 +387,7 @@ function submitSignup() {
   if (DB.users.some(u => u.email === email.toLowerCase())) { S.authErr = 'A workspace with that email already exists in this browser. Log in instead.'; return render(); }
   const u = createUser({ name, email, company, planId: plan });
   DB.session = u.id; saveStore(); S.authErr = '';
-  S.ob = { step: 0, building: false, data: { type: 'office', cities: [landingCity()].filter(Boolean), miles: Math.min(25, PLANS[plan].maxMiles), minContract: 500, industries: CLEANING_TYPES[0].industries.slice(), crew: 'solo' } };
+  S.ob = { step: 0, building: false, data: { type: 'office', cities: [landingCity()].filter(Boolean), miles: 25, minContract: 500, industries: CLEANING_TYPES[0].industries.slice(), crew: 'solo' } };
   go('onboarding');
 }
 function submitLogin() {
@@ -418,19 +418,19 @@ function ctlType(p) {
   return `<div class="choice-grid">${CLEANING_TYPES.map(t => `<button type="button" class="choice ${p.type === t.id ? 'on' : ''}" data-act="p-type" data-v="${t.id}"><b>${t.label}</b><span>${esc(t.hint)}</span></button>`).join('')}</div>`;
 }
 function ctlCities(p, plan) {
-  const full = p.cities.length >= plan.maxCities;
+  const full = p.cities.length >= MAX_CITIES;
   const home = cityById(p.cities[0]) || cityById(landingCity());
   const chosen = p.cities.map((id, i) => `<button type="button" class="chip on" data-act="p-city" data-v="${esc(id)}" title="Remove">${ico('check')}${esc(cityLabel(id))}${i === 0 ? ' · home base' : ''}</button>`).join('');
   return `<div class="chips">${chosen || '<span class="hint">No city picked yet.</span>'}</div>
   ${full ? '' : `<div style="margin-top:14px"><span class="lbl">${p.cities.length ? 'Add a nearby city, or search' : 'Pick the city you work from'}</span><div style="margin-top:8px">${cityPicker('profile', p.cities, home ? nearestCities(home, 8, p.cities) : [])}</div></div>`}
-  <p class="hint" style="margin-top:10px">Distances are measured from the center of the nearest city you pick. The ${plan.name} plan covers up to ${plan.maxCities} ${plan.maxCities === 1 ? 'city' : 'cities'}${full ? ', so remove one to add another' : ''}. CleanScout covers ${fmtNum(CITIES.length)} cities so far.</p>`;
+  <p class="hint" style="margin-top:10px">Distances are measured from the center of the nearest city you pick. Every plan can look in any of the ${fmtNum(CITIES.length)} cities CleanScout covers${full ? `. A feed holds up to ${MAX_CITIES} cities at once, so remove one to add another` : ''}.</p>`;
 }
 function ctlMiles(p, plan) {
   return `<div class="chips">${MILE_OPTIONS.map(m => {
-    const locked = m > plan.maxMiles;
+    const locked = false;
     return `<button type="button" class="chip ${p.miles === m ? 'on' : ''}" data-act="p-miles" data-v="${m}" ${locked ? 'disabled' : ''}>${locked ? ico('lock') : ''}${m} miles</button>`;
   }).join('')}</div>
-  <p class="hint" style="margin-top:10px">Straight-line distance from the center of each city you service. The ${plan.name} plan reaches up to ${plan.maxMiles} miles.</p>`;
+  <p class="hint" style="margin-top:10px">Straight-line distance from the center of each city you service.</p>`;
 }
 function ctlMin(p) {
   return `<div class="chips">${MIN_OPTIONS.map(m => `<button type="button" class="chip ${p.minContract === m ? 'on' : ''}" data-act="p-min" data-v="${m}">${m === 0 ? 'No minimum' : money(m) + '/month'}</button>`).join('')}</div>
@@ -575,7 +575,7 @@ function filtersPanel(u, plan) {
     <div class="field"><span class="lbl">City</span><div class="chips">${p.cities.map(c => `<button class="chip ${f.cities.includes(c) ? 'on' : ''}" data-act="f-city" data-v="${esc(c)}">${esc(cityLabel(c))}</button>`).join('')}</div>
       <span class="hint">${f.cities.length ? '' : 'Showing all of your cities.'}</span></div>
     <div class="field"><span class="lbl">Look in another city</span>${cityPicker('filter', p.cities)}
-      <span class="hint">${p.cities.length < plan.maxCities ? `Picking one adds it to your cities. ${plan.name} covers ${plan.maxCities}, you have ${p.cities.length}.` : `Your ${plan.name} plan covers ${plan.maxCities} ${plan.maxCities === 1 ? 'city' : 'cities'}. Remove one in Settings, or upgrade, to add another.`}</span></div>
+      <span class="hint">${p.cities.length < MAX_CITIES ? 'Picking one adds it to your cities. Every plan can look anywhere.' : `Your feed holds up to ${MAX_CITIES} cities at once. Remove one in Settings to add another.`}</span></div>
     <div class="field"><label for="f-miles">Distance: <b id="miles-out">${f.miles}</b> mi from your ${p.cities.length > 1 ? 'nearest city' : 'city'} center</label><input type="range" id="f-miles" data-f="miles" min="5" max="${p.miles}" step="5" value="${f.miles}"></div>
     ${ctl('Opportunity score', 'minScore', [[0, 'Any score'], [60, '60 and up (Good)'], [75, '75 and up (High)'], [90, '90 and up (Exceptional)']], f.minScore, false)}
     ${ctl('Industry', 'industry', [['all', 'All industries'], ...INDUSTRIES.map(i => [i, i])], f.industry, !fe.industryFilter, 'Growth')}
@@ -939,14 +939,9 @@ document.addEventListener('click', e => {
     case 'checkout': if (stripeLink(d.plan)) goToCheckout(u, d.plan); break;
     case 'land-city': setLandingCity(d.v, true); break;
     case 'f-add-city': {
-      const p = u.profile, plan = planOf(u);
+      const p = u.profile;
       S.cityQ = '';
-      if (p.cities.length >= plan.maxCities) {
-        const next = plan.id === 'solo' ? PLANS.growth : plan.id === 'growth' ? PLANS.pro : null;
-        S.modal = { type: 'upgrade', title: `Your ${plan.name} plan covers ${plan.maxCities} ${plan.maxCities === 1 ? 'city' : 'cities'}`,
-          body: `To look in ${cityLabel(d.v)}, swap it for one of your cities in Settings${next ? `, or move to ${next.name} for up to ${next.maxCities} cities at $${next.price}/month` : ''}.` };
-        render(); break;
-      }
+      if (p.cities.length >= MAX_CITIES) { render(); toast(`Your feed holds up to ${MAX_CITIES} cities at once. Remove one in Settings first.`); break; }
       p.cities.push(d.v); saveStore();
       S.f.cities = [d.v]; S.f.limit = PAGE_SIZE;
       render(); toast(`Added ${cityLabel(d.v)} to your cities.`); break;
@@ -986,7 +981,7 @@ document.addEventListener('click', e => {
     case 'p-city': {
       const p = P(), i = p.cities.indexOf(d.v);
       if (i >= 0) { if (p.cities.length > 1 || S.route === 'onboarding') p.cities.splice(i, 1); else return toast('Keep at least one city.'); }
-      else if (p.cities.length < planOf(u).maxCities) p.cities.push(d.v);
+      else if (p.cities.length < MAX_CITIES) p.cities.push(d.v);
       S.cityQ = '';
       u.profile ? afterProfileChange(u) : render(); break;
     }
@@ -1003,15 +998,13 @@ document.addEventListener('click', e => {
 
     case 'plan-ask': {
       const np = PLANS[d.plan], up = np.price > planOf(u).price;
-      S.modal = { type: 'confirm', title: `${up ? 'Upgrade' : 'Downgrade'} to ${np.name}?`, body: `${np.name} is $${np.price}/month with ${np.limit} opportunities, up to ${np.maxCities} ${np.maxCities === 1 ? 'city' : 'cities'} and ${np.maxMiles} miles. ${inTrial(subOf(u)) ? `Your free trial keeps running until ${fmtDate(subOf(u).trialEndsAt)}. ` : ''}${stripeOn() ? (subOf(u).checkout === 'done' ? 'Also switch the plan in the Stripe billing portal so your charge matches.' : 'You will add a card with Stripe next.') : 'This is a simulated change and no card is charged.'}${!up ? ' Cities and distance beyond the new limits are trimmed.' : ''}`, label: `Switch to ${np.name}`, action: 'plan-confirm', plan: d.plan };
+      S.modal = { type: 'confirm', title: `${up ? 'Upgrade' : 'Downgrade'} to ${np.name}?`, body: `${np.name} is $${np.price}/month with ${np.limit} claimed opportunities a month. ${inTrial(subOf(u)) ? `Your free trial keeps running until ${fmtDate(subOf(u).trialEndsAt)}. ` : ''}${stripeOn() ? (subOf(u).checkout === 'done' ? 'Also switch the plan in the Stripe billing portal so your charge matches.' : 'You will add a card with Stripe next.') : 'This is a simulated change and no card is charged.'}`, label: `Switch to ${np.name}`, action: 'plan-confirm', plan: d.plan };
       render(); break;
     }
     case 'plan-confirm': {
       const np = PLANS[d.plan];
       if (stripeOn() && subOf(u).checkout !== 'done') { S.modal = null; goToCheckout(u, np.id); break; }
       u.planId = np.id; const sub = subOf(u); sub.planId = np.id; sub.status = 'active';
-      u.profile.cities = u.profile.cities.slice(0, np.maxCities);
-      u.profile.miles = Math.min(u.profile.miles, np.maxMiles);
       S.modal = null; S.f = null; saveStore(); render(); toast(`You are on the ${np.name} plan.`); break;
     }
     case 'cancel-ask': S.modal = { type: 'confirm', title: inTrial(subOf(u)) ? 'Cancel your free trial?' : 'Cancel your subscription?', body: inTrial(subOf(u)) ? 'You keep full access until the trial ends and you are never charged. You can keep your plan any time before then.' : 'You keep full access until the end of this billing period. You can keep your plan any time before then.', label: 'Cancel subscription', action: 'cancel-confirm', danger: true }; render(); break;
