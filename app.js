@@ -119,10 +119,10 @@ function locateVisitor() {
     toast(far ? `CleanScout does not cover your area yet. Showing ${cityLabel(c.id)}, the nearest city.` : `Showing opportunities near ${cityLabel(c.id)}.`);
   }, () => { /* declined or unavailable: stay on the default city */ }, { timeout: 8000, maximumAge: 86400000 });
 }
-/* City search box plus suggestions. ctx says what a pick does: 'land' or 'profile'. */
+/* City search box plus suggestions. ctx says what a pick does: 'land', 'profile' or 'filter'. */
 function cityPicker(ctx, skip, emptyList) {
   const hits = S.cityQ ? searchCities(S.cityQ, 8, skip) : emptyList || [];
-  const act = ctx === 'land' ? 'land-city' : 'p-city';
+  const act = { land: 'land-city', filter: 'f-add-city' }[ctx] || 'p-city';
   return `<input class="input" id="city-q" data-cityq="1" value="${esc(S.cityQ)}" placeholder="Search ${fmtNum(CITIES.length)} cities" autocomplete="off" aria-label="Search cities">
     <div class="chips" style="margin-top:10px">${hits.map(c => `<button type="button" class="chip" data-act="${act}" data-v="${esc(c.id)}">${esc(c.name)}, ${c.state} <span class="muted num" style="font-weight:500">${fmtNum(c.count)}</span></button>`).join('')}
     ${S.cityQ && !hits.length ? '<span class="hint">No city by that name is covered yet.</span>' : ''}</div>`;
@@ -574,6 +574,8 @@ function filtersPanel(u, plan) {
     <div class="field"><label for="f-q">Search</label><input class="input" id="f-q" data-f="q" value="${esc(f.q)}" placeholder="Business, address or industry"></div>
     <div class="field"><span class="lbl">City</span><div class="chips">${p.cities.map(c => `<button class="chip ${f.cities.includes(c) ? 'on' : ''}" data-act="f-city" data-v="${esc(c)}">${esc(cityLabel(c))}</button>`).join('')}</div>
       <span class="hint">${f.cities.length ? '' : 'Showing all of your cities.'}</span></div>
+    <div class="field"><span class="lbl">Look in another city</span>${cityPicker('filter', p.cities)}
+      <span class="hint">${p.cities.length < plan.maxCities ? `Picking one adds it to your cities. ${plan.name} covers ${plan.maxCities}, you have ${p.cities.length}.` : `Your ${plan.name} plan covers ${plan.maxCities} ${plan.maxCities === 1 ? 'city' : 'cities'}. Remove one in Settings, or upgrade, to add another.`}</span></div>
     <div class="field"><label for="f-miles">Distance: <b id="miles-out">${f.miles}</b> mi from your ${p.cities.length > 1 ? 'nearest city' : 'city'} center</label><input type="range" id="f-miles" data-f="miles" min="5" max="${p.miles}" step="5" value="${f.miles}"></div>
     ${ctl('Opportunity score', 'minScore', [[0, 'Any score'], [60, '60 and up (Good)'], [75, '75 and up (High)'], [90, '90 and up (Exceptional)']], f.minScore, false)}
     ${ctl('Industry', 'industry', [['all', 'All industries'], ...INDUSTRIES.map(i => [i, i])], f.industry, !fe.industryFilter, 'Growth')}
@@ -936,6 +938,19 @@ document.addEventListener('click', e => {
     case 'f-more': S.f.limit += PAGE_SIZE; render(); break;
     case 'checkout': if (stripeLink(d.plan)) goToCheckout(u, d.plan); break;
     case 'land-city': setLandingCity(d.v, true); break;
+    case 'f-add-city': {
+      const p = u.profile, plan = planOf(u);
+      S.cityQ = '';
+      if (p.cities.length >= plan.maxCities) {
+        const next = plan.id === 'solo' ? PLANS.growth : plan.id === 'growth' ? PLANS.pro : null;
+        S.modal = { type: 'upgrade', title: `Your ${plan.name} plan covers ${plan.maxCities} ${plan.maxCities === 1 ? 'city' : 'cities'}`,
+          body: `To look in ${cityLabel(d.v)}, swap it for one of your cities in Settings${next ? `, or move to ${next.name} for up to ${next.maxCities} cities at $${next.price}/month` : ''}.` };
+        render(); break;
+      }
+      p.cities.push(d.v); saveStore();
+      S.f.cities = [d.v]; S.f.limit = PAGE_SIZE;
+      render(); toast(`Added ${cityLabel(d.v)} to your cities.`); break;
+    }
     case 'f-reset': S.f = defaultFilters(u); render(); break;
     case 'f-view': S.f.view = d.v; render(); break;
     case 'filters-toggle': S.filtersOpen = !S.filtersOpen; render(); break;
