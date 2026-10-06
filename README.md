@@ -1,4 +1,4 @@
-# CleanScout
+# CleanBridge
 
 Finds businesses showing signs they may need a commercial cleaning provider, using public records. Covers every Texas city plus Los Angeles, Chicago, San Francisco and Seattle. Visitors start in the city nearest to them and can search for any other covered city.
 
@@ -11,7 +11,7 @@ Finds businesses showing signs they may need a commercial cleaning provider, usi
 | `data/index.json` | Every covered city, its location and which tiles hold its records. Generated. |
 | `data/tiles/*.json` | The records, split into half-degree map tiles so a visitor only downloads their area. Generated. |
 | `scripts/fetch-data.mjs` | Pulls the public records, filters them and writes `data/`. |
-| `scripts/build-single-file.mjs` | Packs the page into `dist/cleanscout.html` for single-page hosts. |
+| `scripts/build-single-file.mjs` | Packs the page into `dist/cleanbridge.html` for single-page hosts. |
 | `.github/workflows/refresh-data.yml` | Re-runs the fetch every morning once the repo is on GitHub. |
 
 ## Data sources

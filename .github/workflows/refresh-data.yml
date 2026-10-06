@@ -19,7 +19,7 @@ jobs:
       - run: node scripts/fetch-data.mjs
       - name: Commit the new feed
         run: |
-          git config user.name "cleanscout-bot"
+          git config user.name "cleanbridge-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/
           git diff --cached --quiet || git commit -m "Refresh opportunity data"

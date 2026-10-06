@@ -1,6 +1,6 @@
 'use strict';
 /* =====================================================================
-   CLEANSCOUT MVP  views + events (data layer lives in data.js)
+   CLEANBRIDGE MVP  views + events (data layer lives in data.js)
    ===================================================================== */
 
 const $ = s => document.querySelector(s);
@@ -64,7 +64,7 @@ function ensureFilters(u) {
 }
 
 /* ---------- Stripe (Payment Links, set in config.js) ---------- */
-const STRIPE = (window.CLEANSCOUT_CONFIG && window.CLEANSCOUT_CONFIG.stripe) || {};
+const STRIPE = (window.CLEANBRIDGE_CONFIG && window.CLEANBRIDGE_CONFIG.stripe) || {};
 const stripeLink = planId => /^https:\/\/buy\.stripe\.com\//.test(STRIPE[planId] || '') ? STRIPE[planId] : null;
 const stripePortal = () => /^https:\/\/billing\.stripe\.com\//.test(STRIPE.portal || '') ? STRIPE.portal : null;
 const stripeOn = () => !!(stripeLink('solo') && stripeLink('growth') && stripeLink('pro'));
@@ -116,7 +116,7 @@ function locateVisitor() {
     if (!c) return;
     const far = milesBetween(here, c) > 75;
     setLandingCity(c.id, false);
-    toast(far ? `CleanScout does not cover your area yet. Showing ${cityLabel(c.id)}, the nearest city.` : `Showing opportunities near ${cityLabel(c.id)}.`);
+    toast(far ? `CleanBridge does not cover your area yet. Showing ${cityLabel(c.id)}, the nearest city.` : `Showing opportunities near ${cityLabel(c.id)}.`);
   }, () => { /* declined or unavailable: stay on the default city */ }, { timeout: 8000, maximumAge: 86400000 });
 }
 /* City search box plus suggestions. ctx says what a pick does: 'land', 'profile' or 'filter'. */
@@ -165,7 +165,7 @@ function signalChips(opp) {
   const rest = opp.types.filter(t => t !== opp.primaryType);
   return `<span class="signal">${esc(SIG(opp.primaryType).label)}</span>` + rest.map(t => `<span class="signal sec2">${esc(SIG(t).label)}</span>`).join('');
 }
-function sourceTag() { return '<span class="demo-tag" title="From public records. CleanScout has not verified it.">Public record</span>'; }
+function sourceTag() { return '<span class="demo-tag" title="From public records. CleanBridge has not verified it.">Public record</span>'; }
 const feedDate = () => FEED_META.generatedAt ? fmtDate(FEED_META.generatedAt) : 'not yet';
 function sizeLabel(biz) { return `${biz.sqftSource === 'permit' ? '' : 'about '}${fmtNum(biz.sqft)} sq ft`; }
 function lookupLinks(biz) {
@@ -221,7 +221,7 @@ function pubBar() {
   const u = currentUser();
   return `<div class="preview-strip">${FEED_META.error ? 'The opportunity feed could not be loaded. Try again shortly.' : `Live public-record data, refreshed ${feedDate()}. ${stripeOn() ? 'Accounts are saved in this browser only.' : 'Accounts and billing are still a preview: saved in this browser only, no card charged.'}`}</div>
   <header class="pub-bar"><div class="wrap">
-    <button class="logo" data-act="go" data-to="landing" aria-label="CleanScout home">${logoMark()}<span>Clean<em>Scout</em></span></button>
+    <button class="logo" data-act="go" data-to="landing" aria-label="CleanBridge home">${logoMark()}<span>Clean<em>Bridge</em></span></button>
     <nav class="pub-nav" aria-label="Main">
       <button class="btn btn-ghost" data-act="scroll" data-target="how">How it works</button>
       <button class="btn btn-ghost" data-act="go" data-to="pricing">Pricing</button>
@@ -234,8 +234,8 @@ function pubBar() {
 }
 function pubFooter() {
   return `<footer class="footer"><div class="wrap">
-    <div><b style="color:var(--ink)">CleanScout</b><br>Opportunity signals for commercial cleaners.</div>
-    <div style="max-width:520px">Opportunities come from public records and have not been verified by CleanScout. Scores are estimates, not a guarantee that a business needs or will buy cleaning. CleanScout does not contact businesses on your behalf.</div>
+    <div><b style="color:var(--ink)">CleanBridge</b><br>Opportunity signals for commercial cleaners.</div>
+    <div style="max-width:520px">Opportunities come from public records and have not been verified by CleanBridge. Scores are estimates, not a guarantee that a business needs or will buy cleaning. CleanBridge does not contact businesses on your behalf.</div>
   </div></footer>`;
 }
 function faqBlock() {
@@ -257,7 +257,7 @@ function viewLanding() {
     <div>
       <span class="eyebrow">For commercial cleaners in ${esc(cityLabel(landingCity()))}</span>
       <h1>Find Your Next Commercial Cleaning Clients.</h1>
-      <p class="sub">CleanScout finds businesses showing signs they may need a new cleaning provider — so you can spend less time searching and more time closing contracts.</p>
+      <p class="sub">CleanBridge finds businesses showing signs they may need a new cleaning provider — so you can spend less time searching and more time closing contracts.</p>
       <div class="hero-cta">
         <button class="btn btn-primary btn-lg" data-act="auth" data-tab="signup">Find My First Opportunities ${ico('arrow')}</button>
         <button class="btn btn-lg" data-act="scroll" data-target="how">See How It Works</button>
@@ -266,7 +266,7 @@ function viewLanding() {
       <div class="field" style="max-width:420px;margin-top:22px"><span class="lbl">Showing ${esc(cityLabel(landingCity()))}. Work somewhere else?</span>${cityPicker('land', [landingCity()])}</div>
     </div>
     <div class="mock" aria-label="Example of the opportunity dashboard">
-      <div class="mock-bar"><i></i><i></i><i></i><span>cleanscout / opportunities</span></div>
+      <div class="mock-bar"><i></i><i></i><i></i><span>cleanbridge / opportunities</span></div>
       <div class="mock-body">
         <div class="mock-stats">
           <div class="mock-stat"><b>${fmtNum(all.filter(o => daysBetween(o.detectedAt) <= 7).length)}</b><span>new this week</span></div>
@@ -292,7 +292,7 @@ function viewLanding() {
       <div class="vs-col them"><h3>The usual way</h3><ul>
         ${['Search Google Maps', 'Find random businesses', 'Look for contact information', 'Call hundreds of companies', 'Hope someone needs cleaning'].map(t => `<li>${ico('x')}<span>${t}</span></li>`).join('')}
       </ul></div>
-      <div class="vs-col us"><h3>With CleanScout</h3><ul>
+      <div class="vs-col us"><h3>With CleanBridge</h3><ul>
         ${['We monitor opportunity signals', 'We identify promising businesses', "We explain why they're worth contacting", 'We show the contact the public record lists, when there is one', 'You contact the businesses and close the contract'].map(t => `<li>${ico('check')}<span>${t}</span></li>`).join('')}
       </ul></div>
     </div>
@@ -423,7 +423,7 @@ function ctlCities(p, plan) {
   const chosen = p.cities.map((id, i) => `<button type="button" class="chip on" data-act="p-city" data-v="${esc(id)}" title="Remove">${ico('check')}${esc(cityLabel(id))}${i === 0 ? ' · home base' : ''}</button>`).join('');
   return `<div class="chips">${chosen || '<span class="hint">No city picked yet.</span>'}</div>
   ${full ? '' : `<div style="margin-top:14px"><span class="lbl">${p.cities.length ? 'Add a nearby city, or search' : 'Pick the city you work from'}</span><div style="margin-top:8px">${cityPicker('profile', p.cities, home ? nearestCities(home, 8, p.cities) : [])}</div></div>`}
-  <p class="hint" style="margin-top:10px">Distances are measured from the center of the nearest city you pick. Every plan can look in any of the ${fmtNum(CITIES.length)} cities CleanScout covers${full ? `. A feed holds up to ${MAX_CITIES} cities at once, so remove one to add another` : ''}.</p>`;
+  <p class="hint" style="margin-top:10px">Distances are measured from the center of the nearest city you pick. Every plan can look in any of the ${fmtNum(CITIES.length)} cities CleanBridge covers${full ? `. A feed holds up to ${MAX_CITIES} cities at once, so remove one to add another` : ''}.</p>`;
 }
 function ctlMiles(p, plan) {
   return `<div class="chips">${MILE_OPTIONS.map(m => {
@@ -499,7 +499,7 @@ function appShell(u, inner) {
   const tabActive = ['billing', 'settings'].includes(active) ? 'settings' : active;
   return `<div class="app">
     <aside class="side">
-      <button class="logo" data-act="go" data-to="dashboard">${logoMark()}<span>Clean<em>Scout</em></span></button>
+      <button class="logo" data-act="go" data-to="dashboard">${logoMark()}<span>Clean<em>Bridge</em></span></button>
       <nav class="nav" aria-label="App">${NAV.map(([id, label, ic]) => `<button class="${active === id ? 'on' : ''}" data-act="go" data-to="${id}" ${active === id ? 'aria-current="page"' : ''}>${ico(ic)}${label}${id === 'opportunities' && unclaimed ? `<span class="count">${unclaimed}</span>` : ''}${id === 'pipeline' && s.used ? `<span class="count">${s.used}</span>` : ''}</button>`).join('')}</nav>
       <div class="side-foot">
         <div class="plan-box"><b>${plan.name} plan</b> <span class="muted">${inTrial(subOf(u)) ? `Free trial · ${trialDaysLeft(subOf(u))} ${trialDaysLeft(subOf(u)) === 1 ? 'day' : 'days'} left` : `$${plan.price}/mo`}</span>
@@ -512,8 +512,8 @@ function appShell(u, inner) {
       </div>
     </aside>
     <div class="main">
-      <div class="m-top"><button class="logo" data-act="go" data-to="dashboard" style="font-size:18px">${logoMark()}<span>Clean<em>Scout</em></span></button><button class="pill" data-act="go" data-to="billing" style="border:0;cursor:pointer">${plan.name} · ${s.used}/${s.limit}</button></div>
-      <div class="demo-banner">${ico('lock')}<span>${FEED_META.error ? 'The opportunity feed could not be loaded, so only your claimed leads are shown.' : `Public-record data, refreshed ${feedDate()}. Not verified by CleanScout, so confirm details before you reach out.`}${u.demo ? ' This is the demo account.' : ''}</span></div>
+      <div class="m-top"><button class="logo" data-act="go" data-to="dashboard" style="font-size:18px">${logoMark()}<span>Clean<em>Bridge</em></span></button><button class="pill" data-act="go" data-to="billing" style="border:0;cursor:pointer">${plan.name} · ${s.used}/${s.limit}</button></div>
+      <div class="demo-banner">${ico('lock')}<span>${FEED_META.error ? 'The opportunity feed could not be loaded, so only your claimed leads are shown.' : `Public-record data, refreshed ${feedDate()}. Not verified by CleanBridge, so confirm details before you reach out.`}${u.demo ? ' This is the demo account.' : ''}</span></div>
       <main class="page">${inner}</main>
     </div>
     <nav class="tabbar" aria-label="App">${tab.map(([id, l, ic]) => `<button class="${tabActive === id ? 'on' : ''}" data-act="go" data-to="${id}">${ico(ic)}${l}</button>`).join('')}</nav>
@@ -646,7 +646,7 @@ function viewDetail(u) {
         <div class="why-box"><h4>Why this was flagged</h4><p>${esc(opp.reason)}</p></div>
         <div class="card"><div class="card-head"><h3>Evidence and notes</h3></div>
           <div class="evidence">${opp.signalIds.map(id => CATALOG.sigById[id]).map(sg => `<div class="ev"><p>${esc(sg.evidence)}</p><small>${esc(SIG(sg.type).label)} · ${fmtDate(sg.detectedAt)} · ${esc(sg.sourceLabel)}${sg.sourceUrl ? ` · <a href="${esc(sg.sourceUrl)}" target="_blank" rel="noopener">View the public record</a>` : ''}</small></div>`).join('')}</div>
-          <p class="disclaimer" style="margin-top:14px">Quoted from public records as published. CleanScout has not confirmed that this business is open, still at this address or looking for a cleaning provider.</p></div>
+          <p class="disclaimer" style="margin-top:14px">Quoted from public records as published. CleanBridge has not confirmed that this business is open, still at this address or looking for a cleaning provider.</p></div>
         <div class="card"><div class="card-head"><h3>Recommended action</h3></div><p>${esc(opp.recommendedAction)}</p></div>
         <div class="card"><div class="card-head"><h3>Business information</h3></div>
           <dl class="kv">
@@ -774,7 +774,7 @@ function viewBilling(u) {
   const trial = inTrial(sub);
   const pct = Math.min(100, s.used / s.limit * 100);
   return appShell(u, `
-    <div class="page-head"><div><h1>Billing</h1><p>${stripeOn() ? 'Payments are handled by Stripe. CleanScout never sees your card number.' : 'Billing is simulated in this preview. No card is requested or charged.'}</p></div></div>
+    <div class="page-head"><div><h1>Billing</h1><p>${stripeOn() ? 'Payments are handled by Stripe. CleanBridge never sees your card number.' : 'Billing is simulated in this preview. No card is requested or charged.'}</p></div></div>
     <div class="grid" style="max-width:920px">
       ${stripeOn() && sub.checkout !== 'done' ? `<div class="card" style="border-color:var(--signal)"><div class="row" style="justify-content:space-between"><div><b>Add a card to keep your plan after the trial.</b><div class="muted" style="font-size:14px">You are not charged until ${fmtDate(sub.renewsAt)}.</div></div><button class="btn btn-primary" data-act="checkout" data-plan="${plan.id}">Continue to Stripe</button></div></div>` : ''}
       ${canceled ? `<div class="card" style="border-color:var(--crit)"><div class="row" style="justify-content:space-between"><div><b>Your ${trial ? 'free trial' : 'subscription'} is set to end on ${fmtDate(sub.renewsAt)}${trial ? ' and you will not be charged' : ''}.</b><div class="muted" style="font-size:14px">You keep full access until then.</div></div><button class="btn btn-primary" data-act="reactivate">Keep my plan</button></div></div>` : ''}
@@ -792,7 +792,7 @@ function viewBilling(u) {
       <div class="two">
         <div class="card"><div class="card-head"><h3>Payment method</h3></div>${stripeOn()
           ? `<p class="muted">${sub.checkout === 'done' ? 'Your card is on file with Stripe.' : 'No card added yet.'}</p>${stripePortal() ? `<a class="btn btn-sm" style="margin-top:10px" href="${esc(stripePortal())}" target="_blank" rel="noopener">Manage billing in Stripe</a><p class="hint" style="margin-top:8px">Update your card, download invoices, switch plans or cancel there.</p>` : ''}`
-          : '<p class="muted">None on file. Once Stripe is connected, cards are collected on Stripe\'s hosted page so card numbers never touch CleanScout.</p>'}</div>
+          : '<p class="muted">None on file. Once Stripe is connected, cards are collected on Stripe\'s hosted page so card numbers never touch CleanBridge.</p>'}</div>
         <div class="card"><div class="card-head"><h3>Invoices</h3></div><p class="muted">${stripeOn() ? 'Invoices are in the Stripe billing portal.' : 'No invoices in the preview.'}</p>${canceled ? '' : `<button class="btn btn-ghost btn-sm btn-danger" style="margin-top:10px;margin-left:-11px" data-act="cancel-ask">Cancel subscription</button>`}</div>
       </div>
     </div>`);
@@ -808,7 +808,7 @@ function csvFor(list, u) {
   return [cols.map(q).join(','), ...rows.map(r => r.map(q).join(','))].join('\n');
 }
 /* The single-file build runs inside a viewer that blocks downloads, so it offers copy only. */
-const CAN_DOWNLOAD = !window.CLEANSCOUT_EMBEDDED;
+const CAN_DOWNLOAD = !window.CLEANBRIDGE_EMBEDDED;
 function modalHtml() {
   const m = S.modal, u = currentUser();
   if (!m) return '';
@@ -962,7 +962,7 @@ document.addEventListener('click', e => {
       try {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([S.modal.csv], { type: 'text/csv' }));
-        a.download = `cleanscout-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `cleanbridge-leads-${new Date().toISOString().slice(0, 10)}.csv`;
         a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       } catch (er) { toast('Download was blocked here. Use Copy CSV instead.'); }
       break;

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   CLEANSCOUT data refresh
+   CLEANBRIDGE data refresh
    Pulls official open-data records, filters them down to likely commercial
    premises, and writes the feed the site reads:
      data/index.json          sources + every city with its location and tiles
@@ -477,7 +477,7 @@ const tileOf = b => `${Math.floor(b.lat / TILE)}_${Math.floor(b.lng / TILE)}`;
 /* ---------- main ---------- */
 
 async function main() {
-  console.log(`CleanScout refresh: records since ${since}`);
+  console.log(`CleanBridge refresh: records since ${since}`);
   const fetchers = [[SALES_TAX, fetchSalesTax], [ATX_PERMITS, fetchAustinPermits], [SEA_PERMITS, fetchSeattlePermits],
     [CHI_LICENSES, fetchChicagoLicenses], [SF_BUSINESSES, fetchSanFrancisco], [LA_BUSINESSES, fetchLosAngeles]];
   const published = await loadPublished();

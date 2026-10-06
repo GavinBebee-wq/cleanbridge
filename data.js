@@ -1,6 +1,6 @@
 'use strict';
 /* =====================================================================
-   CLEANSCOUT MVP
+   CLEANBRIDGE MVP
    Layers in this file:
      1 CONFIG          plans, stages, signal types, service areas
      2 DATA PROVIDERS  the only place raw data enters the app. Records come from
@@ -284,7 +284,7 @@ async function buildCatalog(cityIds) {
 
 /* ---------- 5. STORE ---------- */
 
-const STORE_KEY = 'cleanscout.v2';
+const STORE_KEY = 'cleanbridge.v2';
 let DB = { users: [], subscriptions: [], saved: [], pipeline: [], activities: [], snapshots: {}, session: null, city: null, cityPicked: false };
 let persisted = true;
 
