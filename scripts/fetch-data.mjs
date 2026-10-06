@@ -12,7 +12,7 @@
 
    Run: node scripts/fetch-data.mjs          (Node 18+, no dependencies)
    ===================================================================== */
-import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -49,12 +49,34 @@ async function soql(src, params) {
   const limit = 5000;
   for (let offset = 0; ; offset += limit) {
     const qs = new URLSearchParams({ ...params, $limit: String(limit), $offset: String(offset) });
-    const res = await fetch(`${src.host}/resource/${src.dataset}.json?${qs}`, { headers: { accept: 'application/json' } });
-    if (!res.ok) throw new Error(`${src.id}: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
-    const page = await res.json();
+    const page = await getJson(`${src.host}/resource/${src.dataset}.json?${qs}`);
     rows.push(...page);
     if (page.length < limit) return rows;
   }
+}
+
+/* Open-data portals drop connections now and then, so every request gets a few tries. */
+async function getJson(url) {
+  let last;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt) await new Promise(r => setTimeout(r, 2000 * 2 ** (attempt - 1)));
+    try {
+      const res = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(120000) });
+      if (res.ok) return await res.json();
+      last = new Error(`HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
+      if (res.status >= 400 && res.status < 500 && res.status !== 429) break;   // a bad query will not fix itself
+    } catch (e) { last = e; }
+  }
+  throw last;
+}
+
+/* The records currently published, so a source that is down keeps yesterday's data. */
+async function loadPublished() {
+  const out = [];
+  let files = [];
+  try { files = await readdir(path.join(DATA, 'tiles')); } catch { return out; }
+  for (const f of files) out.push(...await loadJson(path.join(DATA, 'tiles', f), []));
+  return out;
 }
 
 const KEEP_UPPER = new Set(['LLC', 'PLLC', 'LLP', 'LP', 'PC', 'PA', 'MD', 'DDS', 'DBA', 'USA', 'ATX', 'TX', 'II', 'III', 'IV', 'BBQ', 'HVAC', 'CPA', 'ATM', 'UPS', 'IH', 'FM', 'RR', 'RM', 'US', 'NW', 'NE', 'SW', 'SE']);
@@ -458,6 +480,8 @@ async function main() {
   console.log(`CleanScout refresh: records since ${since}`);
   const fetchers = [[SALES_TAX, fetchSalesTax], [ATX_PERMITS, fetchAustinPermits], [SEA_PERMITS, fetchSeattlePermits],
     [CHI_LICENSES, fetchChicagoLicenses], [SF_BUSINESSES, fetchSanFrancisco], [LA_BUSINESSES, fetchLosAngeles]];
+  const published = await loadPublished();
+  const previous = (await loadJson(path.join(DATA, 'index.json'), {})).total || 0;
   const sources = [], all = [];
   await Promise.all(fetchers.map(async ([src, fn]) => {
     try {
@@ -466,13 +490,22 @@ async function main() {
       sources.push({ id: src.id, label: src.label, url: src.page, records: records.length });
       all.push(...records);
     } catch (e) {
-      // One source being down should not take the others with it.
-      console.warn(`  ${src.id}: FAILED (${e.message})`);
-      sources.push({ id: src.id, label: src.label, url: src.page, records: 0, error: true });
+      // A source that is down keeps the records it had last time, minus any that have aged out.
+      const kept = published
+        .filter(r => r.source.split('+').includes(src.id) && r.signals.some(g => String(g.detectedAt).slice(0, 10) >= since))
+        .map(r => ({ ...r, key: addressKey(r.business.address, r.business.city) }));
+      console.warn(`  ${src.id}: FAILED (${e.message}); carrying forward ${kept.length} records from the last run`);
+      sources.push({ id: src.id, label: src.label, url: src.page, records: kept.length, stale: true });
+      all.push(...kept);
     }
   }));
   if (!all.length) throw new Error('every source failed; keeping the existing feed');
-  const geo = await geocode(mergeByAddress(all));
+  // Carried-forward records that were merged across sources can arrive twice.
+  const seenIds = new Set();
+  const unique = all.filter(r => !seenIds.has(r.externalId) && seenIds.add(r.externalId));
+  const geo = await geocode(mergeByAddress(unique));
+  // Never replace a healthy feed with a badly shrunken one.
+  if (previous && geo.records.length < previous * 0.6) throw new Error(`only ${geo.records.length} records against ${previous} last time; keeping the existing feed`);
   console.log(`  geocoded ${geo.exact} addresses, ${geo.approx} placed at the middle of their city`);
 
   const tiles = new Map(), cityTiles = new Map();
